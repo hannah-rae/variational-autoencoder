@@ -1,0 +1,5 @@
+.DS_Store
+MNIST_data/*
+log/*
+results/*
+training/*
