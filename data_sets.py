@@ -25,9 +25,9 @@ class DataSet(object):
         image_list = glob(d  + '/*')
         images = np.ndarray((len(image_list), self.input_rows, self.input_cols, self.num_filters))
         for i, img_fn in enumerate(image_list):
+            #images[i] = np.divide(cv2.imread(img_fn), 256.)
             images[i] = cv2.imread(img_fn)
         return images
-        # return self.normalize(images)
 
     def load_training_data(self):
         return self.load_data(FLAGS.train_dir)
@@ -51,7 +51,7 @@ def normalize(image):
 
 def apply_augmentation(image):
     # image augmentation
-    augment_type = randint(0, 5)
+    augment_type = randint(0, 4)
     if augment_type == 0:
         # random brightness
         print 'random brightness applied'
@@ -61,22 +61,18 @@ def apply_augmentation(image):
         print 'random contrast applied'
         image = tf.image.random_contrast(image, 0.2, 1.8)
     elif augment_type == 2:
-        # random flip up down
-        print 'random vertical flip applied'
-        image = tf.image.random_flip_up_down(image)
-    elif augment_type == 3:
         # random flip left right
         print 'random horizontal flip applied'
         image = tf.image.random_flip_left_right(image)
-    elif augment_type == 4:
+    elif augment_type == 3:
         # random hue
         print 'random hue applied'
         image = tf.image.random_hue(image, 0.1)
-    elif augment_type == 5:
+    elif augment_type == 4:
         # random saturation
         print 'random saturation applied'
         image = tf.image.random_saturation(image, 0.1, 0.5)
-    return image
+    return image, augment_type
 
 if __name__ == '__main__':
     test()

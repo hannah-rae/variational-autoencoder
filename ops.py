@@ -1,6 +1,8 @@
 import numpy as np
 import tensorflow as tf
 
+from flags import FLAGS
+
 class batch_norm(object):
     """Code modification of http://stackoverflow.com/a/33950177"""
     def __init__(self, epsilon=1e-5, momentum = 0.9, name="batch_norm"):
@@ -38,7 +40,7 @@ class batch_norm(object):
 # standard convolution layer
 def conv2d(x, inputFeatures, outputFeatures, name):
     with tf.variable_scope(name):
-        w = tf.get_variable("w",[5,5,inputFeatures, outputFeatures], initializer=tf.truncated_normal_initializer(stddev=0.02))
+        w = tf.get_variable("w",[FLAGS.kernel_size, FLAGS.kernel_size, inputFeatures, outputFeatures], initializer=tf.truncated_normal_initializer(stddev=0.02))
         b = tf.get_variable("b",[outputFeatures], initializer=tf.constant_initializer(0.0))
         conv = tf.nn.conv2d(x, w, strides=[1,2,2,1], padding="SAME") + b
         return conv
@@ -46,13 +48,13 @@ def conv2d(x, inputFeatures, outputFeatures, name):
 def conv_transpose(x, prev_size, outputShape, name):
     with tf.variable_scope(name):
         # h, w, out, in
-        w = tf.get_variable("w",[5,5, outputShape[-1], prev_size], initializer=tf.truncated_normal_initializer(stddev=0.02))
+        w = tf.get_variable("w",[FLAGS.kernel_size, FLAGS.kernel_size, outputShape[-1], prev_size], initializer=tf.truncated_normal_initializer(stddev=0.02))
         b = tf.get_variable("b",[outputShape[-1]], initializer=tf.constant_initializer(0.0))
         convt = tf.nn.conv2d_transpose(x, w, output_shape=tf.stack(outputShape), strides=[1,2,2,1])
         return convt
 
 def deconv2d(input_, output_shape,
-             k_h=5, k_w=5, d_h=2, d_w=2, stddev=0.02,
+             k_h=FLAGS.kernel_size, k_w=FLAGS.kernel_size, d_h=2, d_w=2, stddev=0.02,
              name="deconv2d"):
     with tf.variable_scope(name):
         # filter : [height, width, output_channels, in_channels]
