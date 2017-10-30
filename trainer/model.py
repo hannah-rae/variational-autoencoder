@@ -1,5 +1,6 @@
 import sys
-sys.path.append("/Users/hannahrae/src/autoencoder/MastcamVAE/")
+#sys.path.append("/Users/hannahrae/src/autoencoder/MastcamVAE/") # for local machine
+sys.path.append("/home/hannah/src/MastcamVAE/") # for remote machine
 
 import tensorflow as tf
 import numpy as np
@@ -17,7 +18,7 @@ TRAIN_FILE = FLAGS.train_records
 
 class LatentAttention():
     def __init__(self):
-        self.writer = tf.summary.FileWriter(makeTrialOutputPath(FLAGS.log_dir))
+        self.writer = tf.summary.FileWriter(FLAGS.log_dir)
 
         self.n_z = FLAGS.n_z
         self.batchsize = FLAGS.batch_size
@@ -74,6 +75,7 @@ class LatentAttention():
 
             image = self.read_and_decode(filename_queue)
             image = tf.reverse(image, axis=[-1])
+            #image = tf.image.rgb_to_grayscale(image, name='rgb_to_grayscale')
 
             # Shuffle the examples and collect them into batch_size batches.
             images = tf.train.shuffle_batch(
@@ -89,8 +91,10 @@ class LatentAttention():
     # encoder
     def recognition(self, input_images):
         with tf.variable_scope("recognition"):
-            h1 = lrelu(conv2d(input_images, FLAGS.input_filters, FLAGS.C1, "d_h1")) # 144x160x3 -> 72x80x16
-            h2 = lrelu(conv2d(h1, FLAGS.C1, FLAGS.C2, "d_h2")) # 72x80x16 -> 36x40x32
+            print FLAGS.input_filters
+            h1 = lrelu(conv2d(input_images, FLAGS.kernel_size_c1, FLAGS.input_filters, FLAGS.C1, "d_h1"))
+            h2 = lrelu(conv2d(h1, FLAGS.kernel_size_c2, FLAGS.C1, FLAGS.C2, "d_h2"))
+            # Output size from each convolution and max pool is side = in_dim / strides = in_dim / 2
             h2_flat = tf.reshape(h2,
                                  [tf.shape(self.images)[0],
                                  (FLAGS.input_rows/4)*(FLAGS.input_cols/4)*FLAGS.C2])
@@ -105,10 +109,10 @@ class LatentAttention():
         with tf.variable_scope("generation"):
             z_develop = dense(z, self.n_z, (FLAGS.input_rows/4)*(FLAGS.input_cols/4)*FLAGS.C2, scope='z_matrix')
             z_matrix = tf.nn.relu(tf.reshape(z_develop, [tf.shape(self.images)[0], (FLAGS.input_rows/4), (FLAGS.input_cols/4), FLAGS.C2]))
-            h1 = tf.nn.relu(conv_transpose(z_matrix, FLAGS.C2, [tf.shape(self.images)[0], (FLAGS.input_rows/2), (FLAGS.input_cols/2), FLAGS.C1], name="g_h1"))
-            h2 = conv_transpose(h1, FLAGS.C1, [tf.shape(self.images)[0], FLAGS.input_rows, FLAGS.input_cols, FLAGS.input_filters], name="g_h2")
+            h1 = tf.nn.relu(conv_transpose(z_matrix, FLAGS.kernel_size_c2, FLAGS.C2, [tf.shape(self.images)[0], (FLAGS.input_rows/2), (FLAGS.input_cols/2), FLAGS.C1], name="g_h1"))
+            h2 = conv_transpose(h1, FLAGS.kernel_size_c1, FLAGS.C1, [tf.shape(self.images)[0], FLAGS.input_rows, FLAGS.input_cols, FLAGS.input_filters], name="g_h2")
             h2 = tf.nn.sigmoid(h2)
-            tf.summary.image("generated", h2, max_outputs=FLAGS.batch_size*3)
+            tf.summary.image("generated", h2, max_outputs=FLAGS.batch_size)
 
         return h2
 
@@ -150,8 +154,11 @@ class LatentAttention():
             step += 1
 
             # Save a checkpoint and evaluate the model periodically.
-            if (step + 1) % 300 == 0:
-              saver.save(sess, os.getcwd()+"/training/train",global_step=step)
+            if (step + 1) % 300 == 0 or (step + 1) == 5000:
+              saver.save(sess, FLAGS.log_dir, global_step=step)
+
+            if step == 5000:
+                break
 
         except tf.errors.OutOfRangeError:
           print('Done training for %d epochs, %d steps.' % (FLAGS.num_epochs, step))

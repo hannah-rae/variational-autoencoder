@@ -6,35 +6,44 @@ import tensorflow as tf
 from flags import FLAGS
 
 # standard convolution layer
-def conv2d(x, inputFeatures, outputFeatures, name):
+def conv2d(x, kernel_size, inputFeatures, outputFeatures, name):
     with tf.variable_scope(name):
-        w = tf.get_variable("w",[FLAGS.kernel_size, FLAGS.kernel_size, inputFeatures, outputFeatures], initializer=tf.truncated_normal_initializer(stddev=0.02))
+        print inputFeatures
+        w = tf.get_variable("w",[kernel_size, kernel_size, inputFeatures, outputFeatures], initializer=tf.truncated_normal_initializer(stddev=0.02))
         b = tf.get_variable("b",[outputFeatures], initializer=tf.constant_initializer(0.0))
         conv = tf.nn.conv2d(x, w, strides=[1,2,2,1], padding="SAME") + b
         return conv
 
-def conv_transpose(x, prev_size, outputShape, name):
+def conv_transpose(x, kernel_size, prev_size, outputShape, name):
     with tf.variable_scope(name):
         # h, w, out, in
-        w = tf.get_variable("w",[FLAGS.kernel_size, FLAGS.kernel_size, outputShape[-1], prev_size], initializer=tf.truncated_normal_initializer(stddev=0.02))
+        w = tf.get_variable("w",[kernel_size, kernel_size, outputShape[-1], prev_size], initializer=tf.truncated_normal_initializer(stddev=0.02))
         b = tf.get_variable("b",[outputShape[-1]], initializer=tf.constant_initializer(0.0))
         convt = tf.nn.conv2d_transpose(x, w, output_shape=tf.stack(outputShape), strides=[1,2,2,1])
         return convt
 
-def deconv2d(input_, output_shape,
-             k_h=FLAGS.kernel_size, k_w=FLAGS.kernel_size, d_h=2, d_w=2, stddev=0.02,
-             name="deconv2d"):
-    with tf.variable_scope(name):
-        # filter : [height, width, output_channels, in_channels]
-        w = tf.get_variable('w', [k_h, k_h, output_shape[-1], input_.get_shape()[-1]],
-                            initializer=tf.random_normal_initializer(stddev=stddev))
+# def max_pool(x, name):
+#     with tf.variable_scope(name):
+#         return tf.nn.max_pool(value=x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME", name=name)
 
-        deconv = tf.nn.conv2d_transpose(input_, w, output_shape=output_shape, strides=[1, d_h, d_w, 1])
+# def upsample(x, name):
+#     with tf.variable_scope(name):
+#         return tf.contrib.keras.layers.UpSampling2D((2, 2))(x)
 
-        biases = tf.get_variable('biases', [output_shape[-1]], initializer=tf.constant_initializer(0.0))
-        deconv = tf.reshape(tf.nn.bias_add(deconv, biases), deconv.get_shape())
+# def deconv2d(input_, output_shape,
+#              k_h=FLAGS.kernel_size, k_w=FLAGS.kernel_size, d_h=2, d_w=2, stddev=0.02,
+#              name="deconv2d"):
+#     with tf.variable_scope(name):
+#         # filter : [height, width, output_channels, in_channels]
+#         w = tf.get_variable('w', [k_h, k_h, output_shape[-1], input_.get_shape()[-1]],
+#                             initializer=tf.random_normal_initializer(stddev=stddev))
 
-        return deconv
+#         deconv = tf.nn.conv2d_transpose(input_, w, output_shape=output_shape, strides=[1, d_h, d_w, 1])
+
+#         biases = tf.get_variable('biases', [output_shape[-1]], initializer=tf.constant_initializer(0.0))
+#         deconv = tf.reshape(tf.nn.bias_add(deconv, biases), deconv.get_shape())
+
+#         return deconv
 
 # leaky reLu unit
 def lrelu(x, leak=0.2, name="lrelu"):
@@ -52,25 +61,3 @@ def dense(x, inputFeatures, outputFeatures, scope=None, with_w=False):
             return tf.matmul(x, matrix) + bias, matrix, bias
         else:
             return tf.matmul(x, matrix) + bias
-
-def makeTrialOutputPath(output_path):
-    '''
-    For a given static output path, returns a path with
-    the hyperparameter tuning trial number appended.
-
-    Dependencies: os, json
-    '''
-    # Get the configuration data from the environment variable.
-    env = json.loads(os.environ.get('TF_CONFIG', '{}'))
-
-    # Get the task information.
-    taskInfo = env.get('task')
-
-    if taskInfo:
-
-        trial = taskInfo.get('trial', '')
-
-        if trial:
-            return os.path.join(output_path, trial)
-
-    return output_path

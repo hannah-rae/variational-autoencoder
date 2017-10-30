@@ -21,7 +21,7 @@ class DataSet(object):
         images = np.ndarray((len(image_list), self.input_rows, self.input_cols, self.num_filters))
         for i, img_fn in enumerate(image_list):
             #images[i] = np.divide(cv2.imread(img_fn), 256.)
-            images[i] = cv2.imread(img_fn)
+            images[i] = cv2.imread(img_fn, cv2.IMREAD_GRAYSCALE).reshape((self.input_rows, self.input_cols, self.num_filters))
         return images
 
     def load_training_data(self):

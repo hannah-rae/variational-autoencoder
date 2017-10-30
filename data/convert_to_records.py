@@ -1,13 +1,15 @@
-
 """Converts Mastcam thumbnail data to TFRecords file format with Example protos."""
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+import sys
+
+sys.path.append("/Users/hannahrae/src/autoencoder/MastcamVAE/") # for local machine
 
 import argparse
 import os
-import sys
-from flags import FLAGS
+
+from utils.flags import FLAGS
 import tensorflow as tf
 import data_sets
 
@@ -43,7 +45,7 @@ def convert_to(images, name):
 
 def main(unused_argv):
   # Get the data.
-  datasets = data_sets.DataSet(input_rows=144, input_cols=160, num_filters=3)
+  datasets = data_sets.DataSet(input_rows=FLAGS.input_rows, input_cols=FLAGS.input_cols, num_filters=FLAGS.input_filters)
   # Convert to Examples and write the result to TFRecords.
   convert_to(datasets.train, 'train')
   #convert_to(datasets.validation, 'validation')
