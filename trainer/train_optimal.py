@@ -13,9 +13,9 @@ import os
 # c1_kernel_sizes = [5, 5]
 # c2_kernel_sizes = [3, 3]
 
-hyperparams = [(1726, 17, 132, 38, 5, 3), (1726, 17, 132, 38, 5, 2), (1726, 17, 132, 38, 4, 3), (1726, 17, 132, 38, 7, 3), (1726, 17, 132, 38, 3, 2)]
+hyperparams = [(1726, 17, 132, 38, 3, 2)]
 for hp in hyperparams:
-    log_dir = '/home/hannah/src/MastcamVAE/log/%d_%d_%d_%d_%d_%d' % hp
+    log_dir = '/home/hannah/src/MastcamVAE/log/oct27_grey_%d_%d_%d_%d_%d_%d' % hp
     os.system("mkdir %s" % log_dir)
     log_dir = (log_dir,)
-    os.system("python util.py --n_z %d --batch_size %d --C1 %d --C2 %d --kernel_size_c1 %d --kernel_size_c2 %d --log_dir %s" % (hp + log_dir))
+    os.system("python util.py --n_z %d --input_filters 1 --batch_size %d --C1 %d --C2 %d --kernel_size_c1 %d --kernel_size_c2 %d --log_dir %s" % (hp + log_dir))
